@@ -6,13 +6,13 @@
 #include <graphics.h>
 
 //количество команд у бота
-#define C_SIZE 32
+#define C_SIZE 64
 // задержка глобальная
 #define W_DELAY 1
 // ширина мира
 #define W_WIDTH 128
 // высота мира
-#define W_HEIGHT 96
+#define W_HEIGHT 128
 // размер объекта
 #define A_SIZE 8
 // отступ от левого края до карты
@@ -20,9 +20,9 @@
 // отступ от верхнего края до карты
 #define W_TOP 20
 // количество ботов
-#define P_SIZE 16
+#define P_SIZE 64
 // количество хавки
-#define F_SIZE 256
+#define F_SIZE 1024
 // максимальное количество команд за ход
 #define MAX_STEP 32
 // базовое здоровье
@@ -33,17 +33,21 @@
 #define S_SIZE 256
 // коэффициент деградации
 #define DEGRADAT 3/4
+// количество лавы
+#define L_SIZE 128
 
 // код пустоты
-#define X_NONE 0
+#define X_NONE 5
 // код бота
-#define X_BOT 1 
+#define X_BOT 3 
 // код стены
-#define X_WALL -1
+#define X_WALL 2
 // код еды
-#define X_FOOD -2
+#define X_FOOD 4
 // код яда
-#define X_POISON 2
+#define X_POISON 1
+// код лавы
+#define X_LAVA 6
 
 using namespace std;
 
@@ -105,6 +109,29 @@ void Poison::draw()
 {
 	bar(this->x * A_SIZE + W_LEFT, this->y * A_SIZE + W_TOP, this->x * A_SIZE + A_SIZE + W_LEFT, this->y * A_SIZE + A_SIZE + W_TOP);
 }
+
+// КЛАСС ЛАВЫ
+class Lava {
+	public:
+		int x, y;
+		Lava(int x, int y);		
+		void draw();
+};
+
+Lava::Lava(int x, int y)
+{
+	this->x = x;
+	this->y = y;
+	World[y][x] = X_LAVA;
+	setfillstyle(1, MAGENTA);
+	this->draw();
+}
+
+void Lava::draw()
+{
+	bar(this->x * A_SIZE + W_LEFT, this->y * A_SIZE + W_TOP, this->x * A_SIZE + A_SIZE + W_LEFT, this->y * A_SIZE + A_SIZE + W_TOP);
+}
+
 
 // КЛАСС БОТА
 class Actor {
@@ -210,22 +237,13 @@ void Actor::pointer_increase(int step)
 
 void Actor::react(int value)
 {
-	switch(value) {
-		case X_POISON: this->pointer_increase(1); break;	
-		case X_BOT: this->pointer_increase(3); break;	
-		case X_NONE: this->pointer_increase(5); break;
-		case X_WALL: this->pointer_increase(2); break;
-		case X_FOOD: this->pointer_increase(4); break;
-		
-	}
+	this->pointer_increase(value);
 }
 
 
 void Actor::draw()
-{
-	
-	bar(this->x * A_SIZE + W_LEFT, this->y * A_SIZE + W_TOP, this->x * A_SIZE + A_SIZE + W_LEFT, this->y * A_SIZE + A_SIZE + W_TOP);
-		
+{	
+	bar(this->x * A_SIZE + W_LEFT, this->y * A_SIZE + W_TOP, this->x * A_SIZE + A_SIZE + W_LEFT, this->y * A_SIZE + A_SIZE + W_TOP);	
 }
 
 void Actor::move(int direction)
@@ -273,6 +291,9 @@ void Actor::move(int direction)
 	
 	this->react(tmp);
 		
+	if (World[this->y][this->x] == X_LAVA) {
+		this->health = 0;
+	}
 	if (World[this->y][this->x] == X_POISON)
 		this->health = 0;	
 	if (World[this->y][this->x] == X_FOOD)
@@ -300,6 +321,7 @@ void Actor::use(int direction)
 					World[this->y][this->x - 1] = X_NONE;
 					this->health += MAX_HEALTH / 2;
 				} break;
+				case X_LAVA: this->health -= MAX_HEALTH / 2; break;
 			}
 			this->react(World[this->y][this->x - 1]);
 		}break;
@@ -313,6 +335,7 @@ void Actor::use(int direction)
 					World[this->y - 1][this->x] = X_NONE;
 					this->health += MAX_HEALTH / 2;				
 				} break;
+				case X_LAVA: this->health -= MAX_HEALTH / 2; break;
 			}
 			this->react(World[this->y - 1][this->x]);
 		} break;
@@ -326,6 +349,7 @@ void Actor::use(int direction)
 					World[this->y][this->x + 1] = X_NONE;
 					this->health += MAX_HEALTH / 2;
 				} break;
+				case X_LAVA: this->health -= MAX_HEALTH / 2; break;
 			}
 			this->react(World[this->y][this->x + 1]);
 		} break;
@@ -339,6 +363,7 @@ void Actor::use(int direction)
 					World[this->y + 1][this->x] = X_NONE;
 					this->health += MAX_HEALTH / 2;				
 				} break;
+				case X_LAVA: this->health -= MAX_HEALTH / 2; break;
 			}
 			this->react(World[this->y + 1][this->x]);
 		} break;
@@ -358,39 +383,15 @@ void Actor::see(int direction)
 	switch(direction) {
 		case 0: {
 			this->react(World[this->y][this->x - 1]);
-			/*
-			switch(World[this->y][this->x - 1]) {
-				case 0: this->pointer_increase(5); break;
-				case -2: this->pointer_increase(4); break;
-				case 1: this->pointer_increase(3); break;
-			}*/
 		}break;
 		case 1: {
 			this->react(World[this->y - 1][this->x]);
-			/*
-			switch(World[this->y - 1][this->x]) {
-				case 0: this->pointer_increase(5); break;
-				case -2: this->pointer_increase(4); break;
-				case 1: this->pointer_increase(3); break;
-			}*/
 		} break;
 		case 2: {
 			this->react(World[this->y][this->x + 1]);
-			/*
-			switch(World[this->y][this->x + 1]) {
-				case 0: this->pointer_increase(5); break;
-				case -2: this->pointer_increase(4); break;
-				case 1: this->pointer_increase(3); break;
-			}*/
 		} break;
 		case 3: {
 			this->react(World[this->y + 1][this->x]);
-			/*
-			switch(World[this->y + 1][this->x]) {
-				case 0: this->pointer_increase(5); break;
-				case -2: this->pointer_increase(4); break;
-				case 1: this->pointer_increase(3); break;
-			}*/
 		} break;
 	}	
 }
@@ -410,9 +411,6 @@ void Actor::work()
 {
 	int count = 0;
 
-	setfillstyle(1, 0);
-	this->draw();	
-
 	while(true) {
 
 		if (this->health <= 0) {
@@ -426,6 +424,11 @@ void Actor::work()
 		//cout << this->pointer << endl;
 		
 		if (this->commands[this->pointer] < 4 && this->commands[this->pointer] >= 0) {
+			
+			
+			setfillstyle(1, 0);
+			this->draw();
+			
 			this->move(this->commands[this->pointer]);
 
 			count = MAX_STEP;
@@ -469,6 +472,7 @@ void Actor::work()
 vector <Actor*> people;
 vector <Food*> food;
 vector <Poison*> poison;
+vector <Lava*> lava;
 
 int main()
 {
@@ -488,7 +492,7 @@ int main()
    			//if (abs(i - W_HEIGHT / 2) <= 8 && abs(j - W_WIDTH / 2) <= 8)
    			//	World[i][j] = X_WALL;
 			//if (abs(i - W_HEIGHT / 2) <= 2 && abs(j - W_WIDTH / 2) <= 2)
-			if ((abs(i % 32 - 0) <= 6 && abs(j % 32 - 0) <= 6) || (abs(i % 32 - 0) >= 16 && abs(i % 32 - 0) <= 22 && abs(j % 32 - 0) >= 16 && abs(j % 32 - 0) <= 22))
+			if ((abs(i % 32 - 0) <= 16 && abs(j % 32 - 0) < 4) || (abs(i % 32 - 0) >= 16 && abs(i % 32 - 0) < 32 && abs(j % 32 - 0) >= 16 && abs(j % 32 - 0) < 20))
 					World[i][j] = X_WALL;
 			   				
    			if (World[i][j] == X_WALL) {
@@ -516,6 +520,15 @@ int main()
 		}
    		poison.push_back(new Poison(tx, ty));
    	}
+   	
+   	for (int i = 0; i < L_SIZE; i++) {
+		int tx = rand() % (W_WIDTH - 2) + 1, ty = rand() % (W_HEIGHT - 2) + 1;
+		while (World[ty][tx] != X_NONE) {
+			tx = rand() % (W_WIDTH - 2) + 1;
+			ty = rand() % (W_HEIGHT - 2) + 1;
+		}
+   		lava.push_back(new Lava(tx, ty));
+   	}
 	   
 	for (int i = 0; i < P_SIZE; i++) {
 		int tx = rand() % (W_WIDTH - 2) + 1, ty = rand() % (W_HEIGHT - 2) + 1;
@@ -535,6 +548,7 @@ int main()
    	auto it = people.begin();
    	auto itf = food.begin();
    	auto itp = poison.begin();
+   	auto itl = lava.begin();
 	int gen = 0, step = 0;
 	while(true) {
 		
@@ -581,6 +595,28 @@ int main()
 			}
 		}
 
+
+		itl = lava.begin();
+		
+		while (itl != lava.end()) {
+			if (World[(*itl)->y][(*itl)->x] == X_LAVA) {
+				++itl;
+			} else {
+				itl = lava.erase(itl);
+			}
+		}
+		
+		if (lava.size() < L_SIZE) {
+			int diff = L_SIZE - lava.size();
+			for (int i = 0; i < diff; i++) {
+				int tx = rand() % (W_WIDTH - 2) + 1, ty = rand() % (W_HEIGHT - 2) + 1;
+				while (World[ty][tx] != X_NONE) {
+					tx = rand() % (W_WIDTH - 2) + 1;
+					ty = rand() % (W_HEIGHT - 2) + 1;
+				}
+				lava.push_back(new Lava(tx, ty)); 
+			}
+		}
 
 		
 		it = people.begin();
