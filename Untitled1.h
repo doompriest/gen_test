@@ -1,37 +1,13 @@
 #pragma once
 
-//количество команд у бота
-#define C_SIZE 64
-// задержка глобальная
-#define W_DELAY 10
 // ширина мира
 #define W_WIDTH 128
 // высота мира
 #define W_HEIGHT 128
-// размер объекта
-//#define A_SIZE 8
-// отступ от левого края до карты
 #define W_LEFT 20
 // отступ от верхнего края до карты
 #define W_TOP 20
-// количество ботов
-#define P_SIZE 32
-// количество хавки
-#define F_SIZE 512
-// максимальное количество команд за ход
-#define MAX_STEP 32
-// базовое здоровье
-#define MAX_HEALTH 64
-// максимальное здоровье
-#define MAX_LIFE 65536
-// количество яда
-#define S_SIZE 512
-// коэффициент деградации
-#define DEGRADAT 3/4
-// количество лавы
-#define L_SIZE 0
-// количество съедобных ботов
-#define E_SIZE 0
+
 
 // код пустоты
 #define X_NONE 5
@@ -48,7 +24,19 @@
 // код ботов-пищи
 #define X_EDIBLE 7
 
-static int A_SIZE = 8;
+static int W_DELAY = 8;
+static int MAX_STEP = 16;
+static int MAX_HEALTH = 48;
+static int MAX_LIFE = 65536;
+static unsigned int A_SIZE = 8;
+static unsigned int C_SIZE = 64;
+static unsigned int P_SIZE = 32;
+static unsigned int E_SIZE = 0;
+static unsigned int F_SIZE = 512;
+static unsigned int S_SIZE = 512;
+static unsigned int L_SIZE = 0;
+static unsigned int DEGRADAT = 3/4;
+
 static int DRAW_MODE = 1; // флаг отрисовки
 static time_t TIMER, INIT_TIMER;
 static int World[W_HEIGHT][W_WIDTH];
@@ -169,12 +157,12 @@ class Actor {
 	public:
 		
 		int x, y;
-		int pointer;
+		unsigned int pointer;
 		int mutant;
 		int edible;
 		
 		int health, max_health;
-		int commands[C_SIZE];
+		int *commands;
 		int direction;
 		
 		Actor(int x, int y, int edible);
@@ -187,6 +175,7 @@ class Actor {
 		void react(int value);
 		void turn(int direction);
 		void draw();
+		~Actor();
 		
 };
 
@@ -204,7 +193,9 @@ Actor::Actor(int x, int y, int edible)
 	this->health = this->max_health;
 	this->direction = rand() % 8;
 	
-	for (int i = 0; i < C_SIZE; i++) {
+	this->commands = new int[C_SIZE];
+	
+	for (unsigned int i = 0; i < C_SIZE; i++) {
 		this->commands[i] = rand() % 16 + 16;//C_SIZE - i;//rand() % 16;//rand() % (C_SIZE / 2);
 	}
 	
@@ -214,6 +205,7 @@ Actor::Actor(int x, int y, int edible)
 	} else {
 		World[this->y][this->x] = X_EDIBLE;
 	}
+	
 	/*
 	this->commands[0] = 9;
 	this->commands[1] = 5;
@@ -246,7 +238,8 @@ Actor::Actor(Actor &parent, int no, int val)
 	this->health = this->max_health;
 	this->direction = parent.direction;
 	
-	for (int i = 0; i < C_SIZE; i++) {
+	this->commands = new int[C_SIZE];
+	for (unsigned int i = 0; i < C_SIZE; i++) {
 		this->commands[i] = parent.commands[i];
 	}	
 	this->mutant = 0;
@@ -315,6 +308,7 @@ void Actor::move(int direction)
 		else
 			this->health += MAX_HEALTH;
 		}
+		
 	if (this->edible == 0)
 		World[this->y][this->x] = X_BOT;
 	else
@@ -450,4 +444,9 @@ void Actor::work()
 	}
 	
 	
+}
+
+Actor::~Actor()
+{
+	delete this->commands;
 }

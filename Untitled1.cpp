@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <string>
 #include <graphics.h>
@@ -16,8 +17,83 @@ vector <Poison*> poison;
 vector <Lava*> lava;
 vector <Actor*> edible;
 
+// число из строки
+int string_to_var(char *str)
+{
+	string var;
+	string line = str;
+	string buf = "";
+	for(unsigned int i = 0; i < line.size(); i++) {
+	    if(line[i] != ' ') { 
+	          buf += line[i];    
+			  //cout << buf << endl; 
+	    }
+	    else{
+	          var = buf;
+	          buf = "";
+    	}
+	}
+	var = buf;	
+	//cout << "MEOW:  " << var << endl;
+	return stoi(var);
+}
+
+// чтение глобальных параметров
+int read_param()
+{
+	
+	const int len = 80, strings = 16;
+	const char ch = '\n';
+	char arr[len][strings];
+	
+	ifstream fs("param.txt", ios::in | ios::binary); 
+	//if(!fs)
+	//	return 1;
+	
+	for(int r = 0; r < strings; r++)
+	{
+		fs.getline(arr[r], len - 1, ch); 
+		
+		//cout << "String " << r + 1 << " = "<< arr[r] << endl; 
+	}
+	
+	W_DELAY = string_to_var(arr[0]);
+	MAX_STEP = string_to_var(arr[1]);
+	MAX_HEALTH = string_to_var(arr[2]);
+	MAX_LIFE = string_to_var(arr[3]);
+	C_SIZE = string_to_var(arr[4]);
+	P_SIZE = string_to_var(arr[5]);
+	E_SIZE = string_to_var(arr[6]);
+	F_SIZE = string_to_var(arr[7]);
+	S_SIZE = string_to_var(arr[8]);
+	L_SIZE = string_to_var(arr[9]);
+	DEGRADAT = string_to_var(arr[10]);
+	
+	fs.close();
+	return 0;
+}
+
+// главная функция
 int main()
 {
+	try {
+		read_param();
+	}
+	catch (...) {
+		cout << "FILE READ ERROR!\n";
+		W_DELAY = 8;
+		MAX_STEP = 16;
+		MAX_HEALTH = 48;
+		MAX_LIFE = 65536;
+		C_SIZE = 64;
+		P_SIZE = 32;
+		E_SIZE = 0;
+		F_SIZE = 512;
+		S_SIZE = 512;
+		L_SIZE = 0;
+		DEGRADAT = 3/4;
+
+	}
 	
 	srand(time(NULL));
 	if (getmaxwidth() < 1600 || getmaxheight() < 900)
@@ -50,7 +126,7 @@ int main()
 
    	}
    	
-   	for (int i = 0; i < F_SIZE; i++) {
+   	for (unsigned int i = 0; i < F_SIZE; i++) {
 		int tx = rand() % (W_WIDTH - 2) + 1, ty = rand() % (W_HEIGHT - 2) + 1;
 		while (World[ty][tx] != X_NONE) {
 			tx = rand() % (W_WIDTH - 2) + 1;
@@ -59,7 +135,7 @@ int main()
    		food.push_back(new Food(tx, ty)); 
    	}
    	
-   	for (int i = 0; i < S_SIZE; i++) {
+   	for (unsigned int i = 0; i < S_SIZE; i++) {
 		int tx = rand() % (W_WIDTH - 2) + 1, ty = rand() % (W_HEIGHT - 2) + 1;
 		while (World[ty][tx] != X_NONE) {
 			tx = rand() % (W_WIDTH - 2) + 1;
@@ -68,7 +144,7 @@ int main()
    		poison.push_back(new Poison(tx, ty));
    	}
    	
-   	for (int i = 0; i < L_SIZE; i++) {
+   	for (unsigned int i = 0; i < L_SIZE; i++) {
 		int tx = rand() % (W_WIDTH - 2) + 1, ty = rand() % (W_HEIGHT - 2) + 1;
 		while (World[ty][tx] != X_NONE) {
 			tx = rand() % (W_WIDTH - 2) + 1;
@@ -77,7 +153,7 @@ int main()
    		lava.push_back(new Lava(tx, ty));
    	}
 	   
-	for (int i = 0; i < P_SIZE; i++) {
+	for (unsigned int i = 0; i < P_SIZE; i++) {
 		int tx = rand() % (W_WIDTH - 2) + 1, ty = rand() % (W_HEIGHT - 2) + 1;
 		while (World[ty][tx] != X_NONE) {
 			tx = rand() % (W_WIDTH - 2) + 1;
@@ -86,7 +162,7 @@ int main()
    		people.push_back(new Actor(tx, ty, 0));
    	}
 
-	for (int i = 0; i < E_SIZE; i++) {
+	for (unsigned int i = 0; i < E_SIZE; i++) {
 		int tx = rand() % (W_WIDTH - 2) + 1, ty = rand() % (W_HEIGHT - 2) + 1;
 		while (World[ty][tx] != X_NONE) {
 			tx = rand() % (W_WIDTH - 2) + 1;
@@ -195,7 +271,9 @@ int main()
 					setfillstyle(1, BLACK);
 					(*it)->draw();
 				}
+				auto tmp = *it;
 				it = people.erase(it);
+				delete tmp;
 			}
 			
 			if (people.size() <= P_SIZE / 4 && people.size() > 0) {
@@ -236,7 +314,9 @@ int main()
 					setfillstyle(1, BLACK);
 					(*ite)->draw();
 				}
+				auto *tmp = *ite;
 				ite = edible.erase(ite);
+				delete tmp;
 			}
 
 			if (edible.size() <= E_SIZE / 4 && edible.size() > 0) {
@@ -309,21 +389,22 @@ int main()
 			strc[str[i].size()] = '\0';
 			
 			outtextxy(getmaxx() / 2 + 200, (12 + i - 1) * 30, strc);
+			delete strc;
 		}
 
-/*
+		/*
 		if (GetAsyncKeyState(27)) {
 			break;
-		}
-		if (GetAsyncKeyState(32)) { 
+		}*/
+		if (GetAsyncKeyState(19)) { 
 			delay(500);
-			while (!GetAsyncKeyState(32)) {
+			while (!GetAsyncKeyState(19)) {
 				delay(250);
 			}
 			delay(500);
 		}
-*/
-		if (GetAsyncKeyState(17)) { // CTRL
+
+		if (GetAsyncKeyState(17) && GetAsyncKeyState(68) && GetAsyncKeyState(83)) { // CTRL + D + S
 			if (DRAW_MODE == 1) {
 				DRAW_MODE = 0;
 				cleardevice();
