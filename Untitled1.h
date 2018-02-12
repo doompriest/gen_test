@@ -9,6 +9,8 @@
 #define W_TOP 20
 
 
+#define DEGRADAT 3/4
+
 // код пустоты
 #define X_NONE 5
 // код бота
@@ -35,7 +37,6 @@ static unsigned int E_SIZE = 0;
 static unsigned int F_SIZE = 512;
 static unsigned int S_SIZE = 512;
 static unsigned int L_SIZE = 0;
-static unsigned int DEGRADAT = 3/4;
 
 static int DRAW_MODE = 1; // флаг отрисовки
 static time_t TIMER, INIT_TIMER;

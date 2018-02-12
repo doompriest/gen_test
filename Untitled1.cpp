@@ -33,7 +33,7 @@ int string_to_var(char *str)
 	          buf = "";
     	}
 	}
-	var = buf;	
+	//var = buf;	
 	//cout << "MEOW:  " << var << endl;
 	return stoi(var);
 }
@@ -54,7 +54,7 @@ int read_param()
 	{
 		fs.getline(arr[r], len - 1, ch); 
 		
-		//cout << "String " << r + 1 << " = "<< arr[r] << endl; 
+		//cout << r + 1 << " = "<< arr[r] << endl; 
 	}
 	
 	W_DELAY = string_to_var(arr[0]);
@@ -67,7 +67,15 @@ int read_param()
 	F_SIZE = string_to_var(arr[7]);
 	S_SIZE = string_to_var(arr[8]);
 	L_SIZE = string_to_var(arr[9]);
-	DEGRADAT = string_to_var(arr[10]);
+	//DEGRADAT = string_to_var(arr[10]);
+	
+	/*
+	cout << W_DELAY << endl;
+	cout << MAX_STEP << endl;
+	cout << MAX_HEALTH << endl;
+	cout << MAX_LIFE << endl;
+	*/
+	
 	
 	fs.close();
 	return 0;
@@ -83,17 +91,16 @@ int main()
 		cout << "FILE READ ERROR!\n";
 		W_DELAY = 8;
 		MAX_STEP = 16;
-		MAX_HEALTH = 48;
+		MAX_HEALTH = 96;
 		MAX_LIFE = 65536;
 		C_SIZE = 64;
-		P_SIZE = 32;
+		P_SIZE = 64;
 		E_SIZE = 0;
 		F_SIZE = 512;
 		S_SIZE = 512;
 		L_SIZE = 0;
-		DEGRADAT = 3/4;
-
 	}
+	
 	
 	srand(time(NULL));
 	if (getmaxwidth() < 1600 || getmaxheight() < 900)
@@ -191,7 +198,9 @@ int main()
 			if (World[(*itf)->y][(*itf)->x] == X_FOOD) {
 				++itf;
 			} else {
+				auto *tmp = *itf;
 				itf = food.erase(itf);
+				delete tmp;
 			}
 		}
 		
@@ -213,7 +222,9 @@ int main()
 			if (World[(*itp)->y][(*itp)->x] == X_POISON) {
 				++itp;
 			} else {
+				auto *tmp = *itp;
 				itp = poison.erase(itp);
+				delete tmp;				
 			}
 		}
 		
@@ -225,7 +236,9 @@ int main()
 					tx = rand() % (W_WIDTH - 2) + 1;
 					ty = rand() % (W_HEIGHT - 2) + 1;
 				}
+				
 				poison.push_back(new Poison(tx, ty)); 
+
 			}
 		}
 
@@ -236,7 +249,9 @@ int main()
 			if (World[(*itl)->y][(*itl)->x] == X_LAVA) {
 				++itl;
 			} else {
+				auto *tmp = *itl;
 				itl = lava.erase(itl);
+				delete tmp;
 			}
 		}
 		
